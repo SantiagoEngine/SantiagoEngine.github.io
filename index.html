@@ -1,6 +1,218 @@
-<div align='center'>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Triângulos Roxos com Logo e Ícones</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background: #0a0014;
+      font-family: sans-serif;
+    }
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+    .center-container {
+      position: absolute;
+      top: 38%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 1;
+      pointer-events: none;
+      width: 90%;
+      max-width: 900px;
+    }
+    .logo {
+      width: 100%;
+      height: auto;
+      max-width: 600px;
+      transition: transform 0.6s ease;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .icons {
+      margin-top: 20px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      pointer-events: auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .icons a img {
+      width: 50px;
+      height: 50px;
+      filter: grayscale(100%);
+      transition: filter 0.3s ease, transform 0.3s ease;
+    }
+    .icons a img:hover {
+      filter: grayscale(0%);
+      transform: scale(1.1);
+    }
+    .center-container:hover .logo {
+      transform: translateY(-30px);
+    }
+    .center-container:hover .icons {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .footer-bar {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #120028;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 140px;
+      transform: translateY(100%);
+      transition: transform 0.5s ease;
+      z-index: 2;
+    }
+    .footer-bar.show {
+      transform: translateY(0);
+    }
+    .footer-logo {
+      height: 100px;
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      .logo {
+        max-width: 80%;
+      }
+      .icons a img {
+        width: 40px;
+        height: 40px;
+      }
+      .footer-bar {
+        height: 100px;
+      }
+      .footer-logo {
+        height: 70px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
 
-<h1>Initial Commit.</h1>
-<h2>Placeholder website, for now.</h2>
+  <div class="center-container">
+    <img class="logo" src="img/logo.png" alt="Logo Principal">
+    <div class="icons">
+      <a href="https://gamebanana.com/mods/565306" target="_blank">
+        <img src="img/icons/gamebanana.png">
+      </a>
+      <a href="https://github.com/SantiagoEngine/SantiagoEngine" target="_blank">
+        <img src="img/icons/github.png">
+      </a>
+    </div>
+  </div>
 
-</div>
+  <div class="footer-bar" id="footerBar">
+    <img class="footer-logo" src="img/logoTeam.png" alt="Logo Footer" onclick="window.open('https://gamebanana.com/studios/38281', '_blank')">
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const points = [];
+    const numPoints = 120;
+
+    const mouse = {
+      x: null,
+      y: null
+    };
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+
+      const footerBar = document.getElementById('footerBar');
+      const triggerHeight = window.innerHeight - 50;
+
+      if (e.clientY >= triggerHeight) {
+        footerBar.classList.add('show');
+      } else {
+        footerBar.classList.remove('show');
+      }
+    });
+
+    class Point {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 0.7;
+        this.vy = (Math.random() - 0.5) * 0.7;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#d084f9';
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < numPoints; i++) {
+      points.push(new Point(Math.random() * canvas.width, Math.random() * canvas.height));
+    }
+
+    function connectPoints() {
+      for (let a = 0; a < points.length; a++) {
+        for (let b = a + 1; b < points.length; b++) {
+          const dx = points[a].x - points[b].x;
+          const dy = points[a].y - points[b].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 100) {
+            ctx.beginPath();
+            ctx.moveTo(points[a].x, points[a].y);
+            ctx.lineTo(points[b].x, points[b].y);
+            ctx.strokeStyle = `rgba(208, 132, 249, ${1 - distance / 100})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+
+          if (mouse.x !== null && mouse.y !== null) {
+            const dxMouse = points[a].x - mouse.x;
+            const dyMouse = points[a].y - mouse.y;
+            const distanceMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+
+            if (distanceMouse < 100) {
+              ctx.beginPath();
+              ctx.moveTo(points[a].x, points[a].y);
+              ctx.lineTo(mouse.x, mouse.y);
+              ctx.strokeStyle = `rgba(255, 200, 255, ${1 - distanceMouse / 100})`;
+              ctx.lineWidth = 1;
+              ctx.stroke();
+            }
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
